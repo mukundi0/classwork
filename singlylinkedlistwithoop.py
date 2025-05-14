@@ -78,4 +78,7 @@ if __name__ == '__main__':
     llist.deletefromBegining()
     llist.printLinkedList()
 
+    llist.insertAtBeginning("A")
+    llist.printLinkedList()
+
 
