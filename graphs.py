@@ -95,55 +95,76 @@ class Graphs:
     def obtain_neighbours(self, node):
         return self.adj_list.get(node, set())
 
+
     def dijkstra(self, start_node):
-        distances = {node: float("infinity") for node in self.adj_list}
+        distances = {node: float("inf") for node in self.adj_list}
         distances[start_node] = 0
-        predecessors = {node: None for node in self.adj_list}
-        priority_queue = [(0, start_node)] # (distance, node)
+
+        priority_queue = [(0, start_node)]
+        visited = set()
 
         while priority_queue:
             current_distance, current_node = heapq.heappop(priority_queue)
 
-            if current_distance > distances[current_node]:
+            if current_node in visited:
                 continue
+            visited.add(current_node)
 
-            for neighbour_info in self.obtain_neighbours(current_node):
-                if isinstance(neighbour_info, tuple):
-                    neighbour, weight = neighbour_info
+            for neighbour in self.obtain_neighbours(current_node):
+                if isinstance(neighbour, tuple):
+                    neighbour_node, weight = neighbour
+                    weight = float(weight)
                 else:
-                    neighbour = neighbour_info
+                    neighbour_node = neighbour
                     weight = 1
 
                 distance = current_distance + weight
 
-                if distance < distances[neighbour]:
-                    distances[neighbour] = distance
-                    predecessors[neighbour] = current_node
-                    heapq.heappush(priority_queue, (distance, neighbour))
+                if distance < distances[neighbour_node]:
+                    distances[neighbour_node] = distance
+                    heapq.heappush(priority_queue, (distance, neighbour_node))
 
-        return distances, predecessors
+        return distances
 
-    def shortest_path_first(self, start_node, end_node):
+    def shortest_path(self, start_node, end_node):
+        distances = {node: float("inf") for node in self.adj_list}
+        previous_nodes = {node: None for node in self.adj_list}
+        distances[start_node] = 0
 
-        distances, predecessors = self.dijkstra(start_node)
+        priority_queue = [(0, start_node)]
 
-        path = []
-        current = end_node
+        while priority_queue:
+            current_distance, current_node = heapq.heappop(priority_queue)
 
-        while current is not None and current in predecessors:
-            path.append(current)
-            current = predecessors[current]
-            if current == start_node:
-                path.append(current)
+            if current_node == end_node:
                 break
 
-            if current is None and end_node != start_node:
+            for neighbour in self.obtain_neighbours(current_node):
+                if isinstance(neighbour, tuple):
+                    neighbour_node, weight = neighbour
+                    weight = float(weight)
+                else:
+                    neighbour_node = neighbour
+                    weight = 1
+
+                distance = current_distance + weight
+
+                if distance < distances[neighbour_node]:
+                    distances[neighbour_node] = distance
+                    previous_nodes[neighbour_node] = current_node
+                    heapq.heappush(priority_queue, (distance, neighbour_node))
+
+
+            path = []
+            current = end_node
+            while current is not None:
+                path.insert(0, current)
+                current = previous_nodes[current]
+
+            if distances[end_node] == float("inf"):
                 return None
 
-        if not path or path[-1] != start_node:
-            return None
-
-        return path[::1]
+            return path, distances[end_node]
 
 if __name__ == '__main__':
     graph_obj = Graphs(directed=True)
@@ -161,18 +182,14 @@ if __name__ == '__main__':
     print(graph_obj.bfs("A"))
     print("DEPTH FIRST SEARCH: ")
     print(graph_obj.dfs("A"))
-    print("\nDIJKSTRA'S ALGORITHM: ")
-    distances, predecessors = graph_obj.dijkstra("A")
-    print("Distances:", distances)
-    print("Predecessors:", predecessors)
 
-    print("\nSHORTEST PATH FIRST (A to C):")
-    path_a_c = graph_obj.shortest_path_first("A", "C")
-    print(f"Path from A to C: {path_a_c}")
+    print("\nDIJKSTRA DISTANCES FROM A:")
+    print(graph_obj.dijkstra("A"))
 
-    print("\nSHORTEST PATH FIRST (A to J):")
-    path_a_j = graph_obj.shortest_path_first("A", "J")
-    print(f"Path from A to J: {path_a_j}")
+    print("\nSHORTEST PATH FROM A TO C:")
+    path, distance = graph_obj.shortest_path("A", "C")
+    print("Path:", path)
+    print("Distance:", distance)
 
 
 
